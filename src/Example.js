@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import Modal from 'react-bootstrap/Modal';
@@ -6,38 +6,24 @@ import ListGroup from 'react-bootstrap/ListGroup';
 import { FaEdit, FaTrashAlt } from 'react-icons/fa';
 import './App.css';
 
-function Example({ show, handleShow, handleClose }) {
-  const [email, setEmail] = useState('');
-  const [textarea, setTextarea] = useState('');
+function Example({ show, handleShow, handleClose, filter }) {
   const [task, setTask] = useState('');
   const [tasks, setTasks] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
 
-  const handleEmailChange = (e) => setEmail(e.target.value);
-  const handleTextareaChange = (e) => setTextarea(e.target.value);
   const handleTaskChange = (e) => setTask(e.target.value);
-
-  const handleSaveChanges = () => {
-    handleClose();
-  };
 
   const addTask = () => {
     if (task.trim()) {
-      if (editIndex !== null) {
-        const updatedTasks = tasks.map((t, index) =>
-          index === editIndex ? task : t
-        );
-        setTasks(updatedTasks);
-        setEditIndex(null);
-      } else {
-        setTasks([...tasks, task]);
-      }
+      const newTask = { text: task, completed: false };
+      setTasks([...tasks, newTask]);
       setTask('');
+      handleClose();
     }
   };
 
   const editTask = (index) => {
-    setTask(tasks[index]);
+    setTask(tasks[index].text);
     setEditIndex(index);
     handleShow();
   };
@@ -46,47 +32,40 @@ function Example({ show, handleShow, handleClose }) {
     setTasks(tasks.filter((_, i) => i !== index));
   };
 
+  const markPending = (index) => {
+    const updatedTasks = tasks.map((task, i) =>
+      i === index ? { ...task, completed: false } : task
+    );
+    setTasks(updatedTasks);
+  };
+
+  const markCompleted = (index) => {
+    const updatedTasks = tasks.map((task, i) =>
+      i === index ? { ...task, completed: true } : task
+    );
+    setTasks(updatedTasks);
+  };
+
+  const filteredTasks = filter === 'completed' ? tasks.filter(task => task.completed) :
+                       filter === 'pending' ? tasks.filter(task => !task.completed) :
+                       tasks;
+
   return (
     <>
       <Modal show={show} onHide={handleClose}>
         <Modal.Header closeButton>
-          <Modal.Title>Modal heading</Modal.Title>
+          <Modal.Title>Add a Task</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
-            <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
-              <Form.Label>Email address</Form.Label>
-              <Form.Control
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={handleEmailChange}
-                autoFocus
-              />
-            </Form.Group>
-            <Form.Group
-              className="mb-3"
-              controlId="exampleForm.ControlTextarea1"
-            >
-              <Form.Label>Example textarea</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                value={textarea}
-                onChange={handleTextareaChange}
-              />
-            </Form.Group>
             <Form.Group className="mb-3" controlId="exampleForm.ControlTask">
-              <Form.Label>{editIndex !== null ? 'Edit Task' : 'Add a Task'}</Form.Label>
+              <Form.Label>Task</Form.Label>
               <Form.Control
                 type="text"
                 placeholder="Enter task"
                 value={task}
                 onChange={handleTaskChange}
               />
-              <Button variant="primary" onClick={addTask} className="mt-2">
-                {editIndex !== null ? 'Update Task' : 'Add Task'}
-              </Button>
             </Form.Group>
           </Form>
         </Modal.Body>
@@ -94,40 +73,32 @@ function Example({ show, handleShow, handleClose }) {
           <Button variant="secondary" onClick={handleClose}>
             Close
           </Button>
-          <Button variant="primary" onClick={handleSaveChanges}>
-            Save Changes
+          <Button variant="primary" onClick={addTask}>
+            Add Task
           </Button>
         </Modal.Footer>
       </Modal>
-
-      {email && textarea && (
-        <div className="mt-4">
-          <h3>Entered Data</h3>
-          <p><strong>Email:</strong> {email}</p>
-          <p><strong>Textarea:</strong> {textarea}</p>
-        </div>
-      )}
-
       <div className="todo-list mt-4">
-        <h3 className='List'>To-Do List</h3>
+        <h3 className="List">To-Do List</h3>
         <ListGroup>
-          {tasks.map((task, index) => (
-            <ListGroup.Item key={index}>
-              {task}
-              <Button
-                variant="outline-primary"
-                onClick={() => editTask(index)}
-                className="float-end ms-2"
-              >
+          {filteredTasks.map((task, index) => (
+            <ListGroup.Item key={index} style={{ color: task.completed ? 'green' : 'black' }}>
+              {task.text}
+              <Button variant="outline-primary" onClick={() => editTask(index)}>
                 <FaEdit />
               </Button>
-              <Button
-                variant="outline-danger"
-                onClick={() => removeTask(index)}
-                className="float-end"
-              >
+              <Button variant="outline-danger" onClick={() => removeTask(index)}>
                 <FaTrashAlt />
               </Button>
+              {task.completed ? (
+                <Button variant="outline-primary" onClick={() => markPending(index)}>
+                  Mark Pending
+                </Button>
+              ) : (
+                <Button class="Mark" onClick={() => markCompleted(index)}>
+                  Mark Completed
+                </Button>
+              )}
             </ListGroup.Item>
           ))}
         </ListGroup>
@@ -137,5 +108,3 @@ function Example({ show, handleShow, handleClose }) {
 }
 
 export default Example;
-
-
